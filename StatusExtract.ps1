@@ -1,40 +1,35 @@
-Import-Module activedirectory
+Import-Module ActiveDirectory
 
 $Dirpath = " "
-$Pathme = Read-Host -Prompt 'Text file name' 
+$Pathme = Read-Host -Prompt 'File to read: '
 
-$Fileme = Read-Host -Prompt 'Project name' # name for csv file
-
-$Groups = Get-Content -Path "$Dirpath\$Pathme"
-# Filters accounts to True and False status
-
-$Table = @()
-
-$Record = @{
-"Status" = ""
-"Username" = ""
+try{
+	$Groups = Get-Content -Path "$Dirpath\$Pathme"
 }
-$i = 1
-$i = 1
-ForEach ($Group in $Groups)
+catch {
+	Write-Host "An error has occured"
+	Write-Host $_
+	}
+	
+# Filters accounts to True and False status
+ForEach ($User in $Users)
 {
-	Write-Progress -Activity "Search in progress" -Status "User $i of $($Groups.Count) complete" -PercentComplete (($i / $Groups.Count) * 100);
 	ForEach-Object {
-		try{
-			$Record."Status" = Get-ADUser -Identity "$Group" | Select-Object -Property enabled 
-			$Record."UserName" = $Group
-			$objRecord = New-Object PSObject -property $Record
-			$Table += $objrecord
+		$User = Get-ADUser $User -Properties *
+		if ( $User ){
+			[PSCustomObject]@{
+			UserName = $User.fullname
+			UserID = $User.samaccountname
+			Email = $User.principalname
+			Enabled = $User.enabled
 			}
-		catch{
-			Write-Verbose "An Error has occured"
-			Write-Host $_
 		}
-		$i += 1
+		else {
+			Write-Host $User + "Does not exist"
+		}
 	}
 }
 
-$Table | Export-csv " " -NoTypeInformation # loaction
+# Use | Export-csv "YOUR FILE HERE" -NoTypeInformation
 
-Write-Host 'You have successfully exported your file'
 echo "`n"
